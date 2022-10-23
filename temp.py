@@ -1,10 +1,10 @@
-import imp
 import os
 import numpy as np
 import random
 import torch
 from torch.nn import init
 import torch.nn as nn
+from torchvision import transforms
 # ir_cameras = ['cam3','cam6']
 # data_path = "data_set\SYSU-MM01"
 # print(os.path.exists(data_path))
@@ -97,5 +97,13 @@ import torch.nn as nn
 # for name in model.state_dict():
 #     print(name)
 # weights_init_kaiming(model)
-for i in range(1, 4):
-    print(i)
+# for i in range(1, 4):
+#     print(i)
+data_path = "C:\data\dataset\RGBNT\\rgbir"
+
+imgs_rgb = np.load(data_path + "\\train_rgb_img.npy")
+lable_rgb = np.load(data_path + "\\train_rgb_label.npy")
+
+img = transforms.ToPILImage()(imgs_rgb[199])
+print(lable_rgb[199])
+img.show()
