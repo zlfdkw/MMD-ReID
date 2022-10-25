@@ -66,22 +66,26 @@ class DATASET_RGBIR():
         print("  ----------------------------------------")
 
 if __name__ == '__main__':
-    dataset = DATASET_RGBIR("C:\code\\vscode\MMD-ReID\data_set\RGBNT\\rgbir", False)
+    dataset = DATASET_RGBIR("C:\data\dataset\RGBNT\\rgbir", False)
     train_data = dataset.train_data
+    train_id_num = dataset.train_id_num
     test_data = dataset.gallery_data
     query_data = dataset.query_data
-    for i, data in enumerate(train_data):
-        print(data)
-        if (i == 299):
-            break
-    for i, data in enumerate(test_data):
-        print(data)
-        if (i == 29):
-            break
-    for i, data in enumerate(query_data):
-        print(data)
-        if (i == 29):
-            break
+    print(len(train_data))
+    print(train_id_num)
+    # for i, data in enumerate(train_data):
+    #     print(data)
+    #     print(len(data))
+        # if (i == 299):
+        #     break
+    # for i, data in enumerate(test_data):
+    #     print(data)
+    #     if (i == 29):
+    #         break
+    # for i, data in enumerate(query_data):
+    #     print(data)
+    #     if (i == 29):
+    #         break
 
 
 

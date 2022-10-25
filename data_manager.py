@@ -79,3 +79,10 @@ def process_test_regdb(img_dir, trial = 1, modal = 'visible'):
         file_label = [int(s.split(' ')[1]) for s in data_file_list]
         
     return file_image, np.array(file_label)
+
+if __name__ == "__main__":
+    data_path = "C:/data/dataset/SYSU-MM01"
+    query_img, _, _ = process_query_sysu(data_path)
+    gallery_img, _, _ = process_gallery_sysu(data_path)
+    pass
+    

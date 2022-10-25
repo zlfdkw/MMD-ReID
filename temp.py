@@ -99,11 +99,25 @@ from torchvision import transforms
 # weights_init_kaiming(model)
 # for i in range(1, 4):
 #     print(i)
-data_path = "C:\data\dataset\RGBNT\\rgbir"
+# data_path = "C:\data\dataset\RGBNT\\rgbir\\bounding_box_train"
+# img_paths = os.listdir(data_path)
+# ids = set()
+# print(len(img_paths))
+# for img in img_paths:
+#     id = int(img[:4])
+#     # print(id)
+#     ids.add(id)
 
-imgs_rgb = np.load(data_path + "\\train_rgb_img.npy")
-lable_rgb = np.load(data_path + "\\train_rgb_label.npy")
+# print(ids)
 
-img = transforms.ToPILImage()(imgs_rgb[199])
-print(lable_rgb[199])
-img.show()
+# imgs_rgb = np.load(data_path + "\\train_rgb_img.npy")
+# lable_rgb = np.load(data_path + "\\train_rgb_label.npy")
+
+# img = transforms.ToPILImage()(imgs_rgb[199])
+# print(lable_rgb[199])
+# img.show()
+
+share_net = 2
+if share_net > 1:
+    for i in range(1, 5): 
+        print(i)
