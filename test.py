@@ -81,6 +81,8 @@ parser.add_argument('--tvsearch', action='store_true', help='Thermal to Visible 
 args = parser.parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+
+# 准备数据集
 dataset = args.dataset
 if dataset == 'sysu':
     data_path = 'SYSU-MM01'
@@ -91,15 +93,20 @@ elif dataset =='regdb':
     n_class = 206
     test_mode = [2, 1]
 
+# 平均试验次数
 print(args.num_trials)
 num_trials = args.num_trials
+
+# 初始化参数
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 best_acc = 0  # best test accuracy
 start_epoch = 0 
 if args.pcb == 'on':
     pool_dim = args.num_strips * args.local_feat_dim
 else:
-    pool_dim = 2048
+    pool_dim = 2048 # 池化层后输出的特征维度
+
+
 print('==> Building model..')
 if args.method =='base':
     net = embed_net(n_class, no_local= 'off', gm_pool =  'on', arch=args.arch, share_net=args.share_net, pcb=args.pcb, local_feat_dim=args.local_feat_dim, num_strips=args.num_strips)
@@ -111,6 +118,7 @@ cudnn.benchmark = True
 
 checkpoint_path = args.model_path
 
+# 损失函数
 if args.method =='id':
     criterion = nn.CrossEntropyLoss()
     criterion.to(device)
@@ -142,17 +150,21 @@ def extract_gall_feat(gall_loader):
     print ('Extracting Gallery Feature...')
     start = time.time()
     ptr = 0
+    # 先创建一个gallery大小的数组保存每一个图片的输出特征
     gall_feat_pool = np.zeros((ngall, pool_dim))
     gall_feat_fc = np.zeros((ngall, pool_dim))
+
     with torch.no_grad():
         for batch_idx, (input, label ) in enumerate(gall_loader):
+            # input:(batch,channel,height,width)
             batch_num = input.size(0)
             input = Variable(input.cuda())
             if args.pcb == 'on':
                 feat_pool = net(input, input, test_mode[0])
                 gall_feat_pool[ptr:ptr+batch_num,: ] = feat_pool.detach().cpu().numpy()
             else:
-                feat_pool, feat_fc = net(input, input, test_mode[0])
+                feat_pool, feat_fc = net(input, input, test_mode[0]) #modal = 1 visibel image
+                # 将提取到的特征放入数组中
                 gall_feat_pool[ptr:ptr+batch_num,: ] = feat_pool.detach().cpu().numpy()
                 gall_feat_fc[ptr:ptr+batch_num,: ]   = feat_fc.detach().cpu().numpy()
             ptr = ptr + batch_num
@@ -187,6 +199,7 @@ def extract_query_feat(query_loader):
     else:
         return query_feat_pool, query_feat_fc
 
+# 获取训练好的网络模型
 suffix = args.run_name + '_' + dataset+'_c_tri_pcb_{}_w_tri_{}'.format(args.pcb,args.w_center)
 if args.pcb=='on':
     suffix = suffix + '_s{}_f{}'.format(args.num_strips, args.local_feat_dim)
@@ -216,7 +229,7 @@ if os.path.isfile(model_path):
 else:
     print('==> no checkpoint found at {}'.format(args.resume))
 
-
+# 加载数据集
 if dataset == 'sysu':
 
     metrics = {'Rank-1':[], 'mAP': [], 'mINP': [], 'Rank-5':[], 'Rank-10':[], 'Rank-20':[]}
@@ -242,10 +255,13 @@ if dataset == 'sysu':
     query_loader = data.DataLoader(queryset, batch_size=args.test_batch, shuffle=False, num_workers=4)
     print('Data Loading Time:\t {:.3f}'.format(time.time() - end))
 
+    # 提取query集中的图片特征
     if args.pcb == 'on':
         query_feat_pool = extract_query_feat(query_loader)
     else:
         query_feat_pool, query_feat_fc = extract_query_feat(query_loader)
+    
+    # 一共做trials次对比实验
     for trial in range(0,num_trials):
         print('Test Trial: {}'.format(trial))
         gall_img, gall_label, gall_cam = process_gallery_sysu(data_path, mode=args.mode, trial=trial)
@@ -253,11 +269,13 @@ if dataset == 'sysu':
         trial_gallset = TestData(gall_img, gall_label, transform=transform_test, img_size=(args.img_w, args.img_h))
         trial_gall_loader = data.DataLoader(trial_gallset, batch_size=args.test_batch, shuffle=False, num_workers=4)
 
+        # 提取gallery集中的图片的特征
         if args.pcb == 'on':
             gall_feat_pool = extract_gall_feat(trial_gall_loader)
         else:
             gall_feat_pool, gall_feat_fc = extract_gall_feat(trial_gall_loader)
 
+        # 计算query集和gallery集的距离矩阵
         if args.re_rank == 'random_walk':
             distmat_pool = random_walk(query_feat_pool, gall_feat_pool)
             if args.pcb == 'off': distmat = random_walk(query_feat_fc, gall_feat_fc)

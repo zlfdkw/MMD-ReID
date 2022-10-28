@@ -23,6 +23,8 @@ from re_rank import random_walk, k_reciprocal
 from random_aug import RandomErasing
 
 import numpy as np
+
+# 打印数组全部数据
 np.set_printoptions(threshold=np.inf)
 
 parser = argparse.ArgumentParser(description='PyTorch Cross-Modality Training')
@@ -407,6 +409,7 @@ def test(epoch):
     gall_feat_att = np.zeros((ngall, feat_dim))
     with torch.no_grad():
         for batch_idx, (input, label) in enumerate(gall_loader):
+            # input:(batch,channel,heigth,width)
             batch_num = input.size(0)
             input = Variable(input.cuda())
             if args.pcb == 'on':

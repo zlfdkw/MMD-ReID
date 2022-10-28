@@ -7,11 +7,14 @@ def eval_sysu(distmat, q_pids, g_pids, q_camids, g_camids, max_rank = 20):
     """Evaluation with sysu metric
     Key: for each query identity, its gallery images from the same camera view are discarded. "Following the original setting in ite dataset"
     """
+    # distmat[m, n] 其中m为query集的大小，n为gallery的大小
     num_q, num_g = distmat.shape
     if num_g < max_rank:
         max_rank = num_g
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
+    # 将dismat矩阵的行方向按照从小到大排列，并且输出对应的索引到indices
     indices = np.argsort(distmat, axis=1)
+     # 得到每行（每个query）可能性从大到小的预测标签
     pred_label = g_pids[indices]
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
     

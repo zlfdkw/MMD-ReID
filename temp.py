@@ -1,10 +1,19 @@
+import argparse
+from ast import parse
+import imp
+from importlib import import_module
 import os
+from xml.dom.expatbuilder import ParseEscape
 import numpy as np
 import random
 import torch
 from torch.nn import init
 import torch.nn as nn
 from torchvision import transforms
+from data.data_loader import RGBIRData
+from data.data_manager import *
+from utils import *
+import time
 # ir_cameras = ['cam3','cam6']
 # data_path = "data_set\SYSU-MM01"
 # print(os.path.exists(data_path))
@@ -117,7 +126,68 @@ from torchvision import transforms
 # print(lable_rgb[199])
 # img.show()
 
-share_net = 2
-if share_net > 1:
-    for i in range(1, 5): 
-        print(i)
+# share_net = 2
+# if share_net > 1:
+#     for i in range(1, 5): 
+#         print(i)
+
+# parser = argparse.ArgumentParser(description="test")
+# parser.add_argument('--dataset', default='sysu', help='dataset name:rgbdb or sysu')
+# parser.add_argument('--lr', default=0.1 , type=float, help='learning rate, 0.00035 for adam')
+# parser.add_argument('--model_path', default='save_model/', type=str,
+#                     help='model save path')
+# parser.add_argument('--log_path', default='log/', type=str,
+#                     help='log save path')
+# parser.add_argument('--vis_log_path', default='log/vis_log/', type=str,
+#                     help='log save path')
+# args = parser.parse_args()
+
+# # dataset = args.dataset
+# # print(dataset)
+
+# # lr = args.lr
+# # print(lr * 100)
+# if not os.path.isdir(args.log_path + 'sysu_log/'):
+#     os.makedirs(args.log_path + 'sysu_log/')
+# if not os.path.isdir(args.model_path):
+#     os.makedirs(args.model_path)
+# if not os.path.isdir(args.vis_log_path):
+#     os.makedirs(args.vis_log_path)
+data_path = 'C:/data/dataset/RGBNT/rgbir'
+print('==> Loading data..')
+# Data loading code
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+transform_train = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.Pad(10),
+    # transforms.RandomCrop((args.img_h, args.img_w)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize,
+    ])
+end = time.time()
+# training set
+trainset = RGBIRData(data_path, transform=transform_train)
+# generate the idx of each person identity
+color_pos, thermal_pos = GenIdx(trainset.train_rgb_label, trainset.train_ir_label)
+
+# testing set
+query_img, query_label, query_cam = process_query_rgbir(data_path)
+gall_img, gall_label, gall_cam = process_gallery_rgbir(data_path)
+
+n_class = len(np.unique(trainset.train_rgb_label))
+nquery = len(query_label)
+ngall = len(gall_label)
+
+print('Dataset {} statistics:'.format('rgbir'))
+print('  ------------------------------')
+print('  subset   | # ids | # images')
+print('  ------------------------------')
+print('  visible  | {:5d} | {:8d}'.format(n_class, len(trainset.train_rgb_label)))
+print('  thermal  | {:5d} | {:8d}'.format(n_class, len(trainset.train_ir_label)))
+print('  ------------------------------')
+print('  query    | {:5d} | {:8d}'.format(len(np.unique(query_label)), nquery))
+print('  gallery  | {:5d} | {:8d}'.format(len(np.unique(gall_label)), ngall))
+print('  ------------------------------')
+print('Data Loading Time:\t {:.3f}'.format(time.time() - end))
