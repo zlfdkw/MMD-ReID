@@ -93,6 +93,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 set_seed(args.seed)
 
+# 数据集路径
 dataset = args.dataset
 if dataset == 'sysu':
     data_path = './SYSU-MM01'
@@ -112,6 +113,7 @@ if not os.path.isdir(checkpoint_path):
 if not os.path.isdir(args.vis_log_path):
     os.makedirs(args.vis_log_path)
 
+# 训练好后保存的模型文件名
 suffix = args.run_name + '_' + dataset+'_c_tri_pcb_{}_w_tri_{}'.format(args.pcb,args.w_center)
 if args.pcb=='on':
     suffix = suffix + '_s{}_f{}'.format(args.num_strips, args.local_feat_dim)
@@ -178,6 +180,7 @@ if dataset == 'sysu':
     # training set
     trainset = SYSUData(data_path, transform=transform_train)
     # generate the idx of each person identity
+    # 获取每一个id的index列表
     color_pos, thermal_pos = GenIdx(trainset.train_color_label, trainset.train_thermal_label)
 
     # testing set

@@ -4,6 +4,7 @@ from torch.nn import init
 import torch.nn.functional as F
 from resnet import resnet50, resnet18
 
+# 计算L2范数
 class Normalize(nn.Module):
     def __init__(self, power=2):
         super(Normalize, self).__init__()
@@ -90,9 +91,9 @@ def weights_init_classifier(m):
             init.zeros_(m.bias.data)
 
 
-
+# 模态独立的浅层
 class visible_module(nn.Module):
-    def __init__(self, arch='resnet50', share_net=1):
+    def __init__(self, arch='resnet50', share_net=1): # share_net：从第share_net层开始共享参数
         super(visible_module, self).__init__()
 
         model_v = resnet50(pretrained=True,
@@ -100,14 +101,17 @@ class visible_module(nn.Module):
         # avg pooling to global pooling
         self.share_net = share_net
 
+        # 如果全部共享参数，直接跳过，下面的embed_net有对应操作
         if self.share_net == 0:
             pass
         else:
             self.visible = nn.ModuleList()
+            # 第零层
             self.visible.conv1 = model_v.conv1
             self.visible.bn1 = model_v.bn1
             self.visible.relu = model_v.relu
             self.visible.maxpool = model_v.maxpool
+
             if self.share_net > 1:
                 for i in range(1, self.share_net):               
                     setattr(self.visible,'layer'+str(i), getattr(model_v,'layer'+str(i)))
@@ -162,7 +166,7 @@ class thermal_module(nn.Module):
                     x = getattr(self.thermal, 'layer'+str(i))(x)             
             return x
 
-
+# 共享参数的深层
 class base_resnet(nn.Module):
     def __init__(self, arch='resnet50', share_net=1):
         super(base_resnet, self).__init__()
@@ -245,9 +249,11 @@ class embed_net(nn.Module):
             
         
         else:
-            self.bottleneck = nn.BatchNorm1d(pool_dim)
+            # 归一化层
+            self.bottleneck = nn.BatchNorm1d(pool_dim) # pool_dim是上一层输出维度，也是输出维度，norm层不改变数据维度
             self.bottleneck.bias.requires_grad_(False)  # no shift
 
+            # 最后的fc层
             self.classifier = nn.Linear(pool_dim, class_num, bias=False)
 
             self.bottleneck.apply(weights_init_kaiming)
@@ -333,3 +339,10 @@ class embed_net(nn.Module):
                 return x_pool, self.classifier(feat)#, scores
             else:
                 return self.l2norm(x_pool), self.l2norm(feat)
+
+if __name__ == '__main__':
+    norm = Normalize(2)
+    feat = torch.tensor([[3, 4]])
+    print(feat)
+    result = norm(feat)
+    print(result)

@@ -108,6 +108,8 @@ class TestData(data.Dataset):
 
     def __len__(self):
         return len(self.test_image)
+
+
         
 class TestDataOld(data.Dataset):
     def __init__(self, data_dir, test_img_file, test_label, transform=None, img_size = (144,288)):
